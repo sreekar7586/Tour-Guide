@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Tour Guide</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+body { font-family: Arial; margin:0; background:#eef2f3; }
+header { background:#1f3c88; color:white; padding:15px; text-align:center; }
+.container { padding:20px; }
+input { padding:10px; width:100%; margin:10px 0; }
+button { padding:10px; background:#ff6b6b; color:white; border:none; cursor:pointer; }
+.card { background:white; padding:15px; margin:10px 0; border-radius:10px; box-shadow:0 3px 8px rgba(0,0,0,0.1);}
+.card img { width:100%; height:200px; object-fit:cover; border-radius:10px; }
+#map { height:400px; margin-top:20px; border-radius:10px; }
+h2 { color:#1f3c88; }
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>🌍 Advanced Tour Guide System</h1>
+<p>DSA • Maps • Route Optimization</p>
+</header>
+
+<div class="container">
+<input type="text" id="city" placeholder="Enter city ">
+<button onclick="search()">Search</button>
+
+<div id="output"></div>
+<div id="map"></div>
+</div>
+
+<script>
+
+// INIT MAP
+let map = L.map('map').setView([20.5937,78.9629],5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+let markers=[];
+let routeLine=null;
+
+// DATA (ALL CITIES)
+const data = {
+hyderabad:{
+places:[
+{name:"Charminar",lat:17.3616,lon:78.4747,img:"charminar.png"},
+{name:"Golconda Fort",lat:17.3833,lon:78.4011,img:"https://picsum.photos/400/300?2"},
+{name:"Ramoji Film City",lat:17.2543,lon:78.6808,img:"https://picsum.photos/400/300?3"},
+{name:"Hussain Sagar",lat:17.4239,lon:78.4738,img:"https://picsum.photos/400/300?4"},
+{name:"Birla Mandir",lat:17.4062,lon:78.4691,img:"https://picsum.photos/400/300?5"},
+{name:"Salar Jung Museum",lat:17.3713,lon:78.4804,img:"https://picsum.photos/400/300?6"},
+{name:"Chowmahalla Palace",lat:17.3578,lon:78.4717,img:"https://picsum.photos/400/300?7"}
+],
+food:[
+{name:"Biryani",hotel:"Paradise",img:"https://picsum.photos/400/300?101"},
+{name:"Haleem",hotel:"Shah Ghouse",img:"https://picsum.photos/400/300?102"},
+{name:"Irani Chai",hotel:"Cafe Niloufer",img:"https://picsum.photos/400/300?103"}
+]
+},
+
+delhi:{
+places:[
+{name:"India Gate",lat:28.6129,lon:77.2295,img:"https://picsum.photos/400/300?11"},
+{name:"Red Fort",lat:28.6562,lon:77.2410,img:"https://picsum.photos/400/300?12"},
+{name:"Qutub Minar",lat:28.5245,lon:77.1855,img:"https://picsum.photos/400/300?13"},
+{name:"Lotus Temple",lat:28.5535,lon:77.2588,img:"https://picsum.photos/400/300?14"},
+{name:"Akshardham",lat:28.6127,lon:77.2773,img:"https://picsum.photos/400/300?15"},
+{name:"Humayun Tomb",lat:28.5933,lon:77.2507,img:"https://picsum.photos/400/300?16"},
+{name:"Jama Masjid",lat:28.6507,lon:77.2334,img:"https://picsum.photos/400/300?17"}
+],
+food:[
+{name:"Chaat",hotel:"Chandni Chowk",img:"https://picsum.photos/400/300?104"},
+{name:"Butter Chicken",hotel:"Moti Mahal",img:"https://picsum.photos/400/300?105"},
+{name:"Paratha",hotel:"Paranthe Wali Gali",img:"https://picsum.photos/400/300?106"}
+]
+},
+
+vijayawada:{
+places:[
+{name:"Kanaka Durga Temple",lat:16.5062,lon:80.6480,img:"https://picsum.photos/400/300?21"},
+{name:"Prakasam Barrage",lat:16.5184,lon:80.6124,img:"https://picsum.photos/400/300?22"},
+{name:"Bhavani Island",lat:16.4975,lon:80.6510,img:"https://picsum.photos/400/300?23"},
+{name:"Undavalli Caves",lat:16.4925,lon:80.5806,img:"https://picsum.photos/400/300?24"},
+{name:"Gandhi Hill",lat:16.5167,lon:80.6167,img:"https://picsum.photos/400/300?25"},
+{name:"Rajiv Gandhi Park",lat:16.5150,lon:80.6300,img:"https://picsum.photos/400/300?26"},
+{name:"Mangalagiri Temple",lat:16.4300,lon:80.5600,img:"https://picsum.photos/400/300?27"}
+],
+food:[
+{name:"Pesarattu",hotel:"Local Tiffin",img:"https://picsum.photos/400/300?107"},
+{name:"Andhra Meals",hotel:"Sri Kanya",img:"https://picsum.photos/400/300?108"},
+{name:"Gongura",hotel:"Local Mess",img:"https://picsum.photos/400/300?109"}
+]
+},
+
+bangalore:{
+places:[
+{name:"Lalbagh",lat:12.9507,lon:77.5848,img:"https://picsum.photos/400/300?31"},
+{name:"Cubbon Park",lat:12.9763,lon:77.5929,img:"https://picsum.photos/400/300?32"},
+{name:"Bangalore Palace",lat:12.9987,lon:77.5920,img:"https://picsum.photos/400/300?33"},
+{name:"Vidhana Soudha",lat:12.9797,lon:77.5907,img:"https://picsum.photos/400/300?34"},
+{name:"ISKCON Temple",lat:13.0097,lon:77.5510,img:"https://picsum.photos/400/300?35"},
+{name:"Bannerghatta Zoo",lat:12.8000,lon:77.5770,img:"https://picsum.photos/400/300?36"},
+{name:"Ulsoor Lake",lat:12.9833,lon:77.6167,img:"https://picsum.photos/400/300?37"}
+],
+food:[
+{name:"Masala Dosa",hotel:"CTR",img:"https://picsum.photos/400/300?110"},
+{name:"Bisi Bele Bath",hotel:"MTR",img:"https://picsum.photos/400/300?111"},
+{name:"Filter Coffee",hotel:"Brahmin Cafe",img:"https://picsum.photos/400/300?112"}
+]
+},
+
+maharashtra:{
+places:[
+{name:"Gateway of India",lat:18.9220,lon:72.8347,img:"https://picsum.photos/400/300?41"},
+{name:"Marine Drive",lat:18.9430,lon:72.8238,img:"https://picsum.photos/400/300?42"},
+{name:"Juhu Beach",lat:19.0883,lon:72.8266,img:"https://picsum.photos/400/300?43"},
+{name:"Elephanta Caves",lat:18.9633,lon:72.9315,img:"https://picsum.photos/400/300?44"},
+{name:"Haji Ali",lat:18.9827,lon:72.8089,img:"https://picsum.photos/400/300?45"},
+{name:"Siddhivinayak",lat:19.0176,lon:72.8300,img:"https://picsum.photos/400/300?46"},
+{name:"Colaba",lat:18.9217,lon:72.8325,img:"https://picsum.photos/400/300?47"}
+],
+food:[
+{name:"Vada Pav",hotel:"Anand Stall",img:"https://picsum.photos/400/300?113"},
+{name:"Pav Bhaji",hotel:"Sardar",img:"https://picsum.photos/400/300?114"},
+{name:"Misal Pav",hotel:"Aaswad",img:"https://picsum.photos/400/300?115"}
+]
+},
+
+punjab:{
+places:[
+{name:"Golden Temple",lat:31.6200,lon:74.8765,img:"https://picsum.photos/400/300?51"},
+{name:"Jallianwala Bagh",lat:31.6206,lon:74.8806,img:"https://picsum.photos/400/300?52"},
+{name:"Wagah Border",lat:31.6040,lon:74.5720,img:"https://picsum.photos/400/300?53"},
+{name:"Durgiana Temple",lat:31.6300,lon:74.8700,img:"https://picsum.photos/400/300?54"},
+{name:"Ram Bagh",lat:31.6305,lon:74.8723,img:"https://picsum.photos/400/300?55"},
+{name:"Museum",lat:31.6280,lon:74.8730,img:"https://picsum.photos/400/300?56"},
+{name:"Akal Takht",lat:31.6205,lon:74.8760,img:"https://picsum.photos/400/300?57"}
+],
+food:[
+{name:"Makki Roti",hotel:"Kesar Dhaba",img:"https://picsum.photos/400/300?116"},
+{name:"Butter Chicken",hotel:"Beera",img:"https://picsum.photos/400/300?117"},
+{name:"Lassi",hotel:"Ahuja",img:"https://picsum.photos/400/300?118"}
+]
+}
+
+};
+
+// DISTANCE
+function dist(a,b){
+const R=6371;
+let dLat=(b.lat-a.lat)*Math.PI/180;
+let dLon=(b.lon-a.lon)*Math.PI/180;
+let x=Math.sin(dLat/2)**2+
+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*
+Math.sin(dLon/2)**2;
+return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+// GREEDY ROUTE (DSA)
+function routeOrder(places){
+let visited=new Array(places.length).fill(false);
+let order=[0];
+visited[0]=true;
+
+while(order.length<places.length){
+let last=order[order.length-1];
+let min=Infinity, idx=-1;
+
+for(let i=0;i<places.length;i++){
+if(!visited[i]){
+let d=dist(places[last],places[i]);
+if(d<min){min=d; idx=i;}
+}
+}
+visited[idx]=true;
+order.push(idx);
+}
+return order;
+}
+
+// SEARCH
+function search(){
+const city=document.getElementById("city").value.toLowerCase();
+const output=document.getElementById("output");
+
+if(!data[city]){
+output.innerHTML="❌ City not available";
+return;
+}
+
+let {places,food}=data[city];
+
+map.invalidateSize();
+map.setView([places[0].lat,places[0].lon],12);
+
+// clear
+markers.forEach(m=>map.removeLayer(m));
+markers=[];
+if(routeLine) map.removeLayer(routeLine);
+
+// sort
+places.sort((a,b)=>dist(places[0],a)-dist(places[0],b));
+
+// display places
+output.innerHTML="<h2>Tourist Places</h2>";
+
+places.forEach(p=>{
+markers.push(L.marker([p.lat,p.lon]).addTo(map).bindPopup(p.name));
+
+output.innerHTML+=`
+<div class="card">
+<b>${p.name}</b><br>
+📏 ${dist(places[0],p).toFixed(2)} km
+<img src="${p.img}">
+</div>`;
+});
+
+// food
+output.innerHTML+="<h2>Food & Hotels</h2>";
+
+food.forEach(f=>{
+output.innerHTML+=`
+<div class="card">
+<b>${f.name}</b><br>
+🏨 ${f.hotel}
+<img src="${f.img}">
+</div>`;
+});
+
+// route line
+let order=routeOrder(places);
+let latlngs=order.map(i=>[places[i].lat,places[i].lon]);
+routeLine = L.polyline(latlngs,{color:'red'}).addTo(map);
+
+}
+
+</script>
+
+</body>
+</html>
