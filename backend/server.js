@@ -63,8 +63,12 @@ app.get("/search", async (req, res) => {
 
 
         // STEP 2: GET TOURIST PLACES
+        // FIX 1: Better categories (museums, restaurants, entertainment, etc)
+        // FIX 2: Add proximity bias to prioritize nearby famous places
+        // FIX 3: Sort results by distance
+        // FIX 6: Smaller radius (10000m = 10km instead of 15km)
         const placesUrl =
-    `https://api.geoapify.com/v2/places?categories=tourism.sights,tourism.attraction&filter=circle:${lon},${lat},15000&limit=20&apiKey=${API_KEY}`;
+    `https://api.geoapify.com/v2/places?categories=tourism.sights,tourism.attraction,heritage,historic,museum,park,entertainment,catering.restaurant&filter=circle:${lon},${lat},10000&bias=proximity:${lon},${lat}&limit=15&sort=distance&apiKey=${API_KEY}`;
 
         console.log("Places URL:", placesUrl);
 
@@ -97,11 +101,22 @@ app.get("/search", async (req, res) => {
                         place.properties.lon
                 }));
 
+        // FIX 4: Remove duplicate places
+        const uniquePlaces = [];
+        const seen = new Set();
+
+        places.forEach(place => {
+            if (!seen.has(place.name)) {
+                seen.add(place.name);
+                uniquePlaces.push(place);
+            }
+        });
+
 
         // IF NO PLACES FOUND
-        if (places.length === 0) {
+        if (uniquePlaces.length === 0) {
 
-            places.push({
+            uniquePlaces.push({
 
                 name:
                     `${city} City Center`,
@@ -121,7 +136,7 @@ app.get("/search", async (req, res) => {
 
             city,
 
-            places
+            places: uniquePlaces
         });
 
     }
