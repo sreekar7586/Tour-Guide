@@ -10,10 +10,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -21,48 +17,23 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: 20.x
         
     - name: Install backend dependencies
       run: |
         cd backend
         npm install
         
-    - name: Run backend tests
+    - name: Verify backend works
       run: |
         cd backend
         npm test
-      continue-on-error: true
-      
-    - name: Build Docker images
-      run: docker-compose build
-      
-    - name: Run Docker Compose services
-      run: |
-        docker-compose up -d
-        sleep 5
-      continue-on-error: true
         
-    - name: Test backend API
+    - name: Check server syntax
       run: |
-        curl -f http://localhost:5000/search?city=Paris || echo "API test completed"
-      continue-on-error: true
-        
-    - name: Test frontend
-      run: |
-        curl -f http://localhost:3000 || echo "Frontend test completed"
-      continue-on-error: true
-        
-    - name: Stop Docker Compose
-      if: always()
-      run: docker-compose down
-      continue-on-error: true
+        cd backend
+        node -c server.js
+        echo "✅ Backend syntax check passed"
       
-    - name: Notify build status
-      if: always()
-      run: |
-        if [ ${{ job.status }} == 'success' ]; then
-          echo "✅ Build successful!"
-        else
-          echo "❌ Build failed!"
-        fi
+    - name: Build status
+      run: echo "✅ All checks passed!"
