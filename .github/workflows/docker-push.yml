@@ -1,0 +1,100 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_run:
+    workflows: ["Build and Test"]
+    branches: [ main ]
+    types:
+      - completed
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'push'
+    
+    permissions:
+      contents: read
+      packages: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+      if: secrets.DOCKER_USERNAME != ''
+        
+    - name: Extract metadata - Backend
+      id: meta_backend
+      uses: docker/metadata-action@v4
+      with:
+        images: |
+          ghcr.io/${{ github.repository }}/backend
+          ${{ secrets.DOCKER_USERNAME != '' && format('docker.io/{0}/tour-guide-backend', secrets.DOCKER_USERNAME) || '' }}
+        tags: |
+          type=ref,event=branch
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha
+          type=raw,value=latest,enable={{is_default_branch}}
+          
+    - name: Extract metadata - Frontend
+      id: meta_frontend
+      uses: docker/metadata-action@v4
+      with:
+        images: |
+          ghcr.io/${{ github.repository }}/frontend
+          ${{ secrets.DOCKER_USERNAME != '' && format('docker.io/{0}/tour-guide-frontend', secrets.DOCKER_USERNAME) || '' }}
+        tags: |
+          type=ref,event=branch
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha
+          type=raw,value=latest,enable={{is_default_branch}}
+          
+    - name: Build and push backend image
+      uses: docker/build-push-action@v4
+      with:
+        context: ./backend
+        push: true
+        tags: ${{ steps.meta_backend.outputs.tags }}
+        labels: ${{ steps.meta_backend.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: Build and push frontend image
+      uses: docker/build-push-action@v4
+      with:
+        context: ./frontend
+        push: true
+        tags: ${{ steps.meta_frontend.outputs.tags }}
+        labels: ${{ steps.meta_frontend.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: Create deployment payload
+      run: |
+        echo "Backend Image: ghcr.io/${{ github.repository }}/backend:latest"
+        echo "Frontend Image: ghcr.io/${{ github.repository }}/frontend:latest"
+        
+    - name: Notify push completion
+      run: |
+        echo "✅ Docker images built and pushed successfully!"
+        echo "Backend: ghcr.io/${{ github.repository }}/backend"
+        echo "Frontend: ghcr.io/${{ github.repository }}/frontend"
