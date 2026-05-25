@@ -1,246 +1,623 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Advanced Tour Guide</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <meta charset="UTF-8">
 
-<style>
-body { font-family: Arial; margin:0; background:#eef2f3; }
-header { background:#1f3c88; color:white; padding:15px; text-align:center; }
-.container { padding:20px; }
-input { padding:10px; width:100%; margin:10px 0; }
-button { padding:10px; background:#ff6b6b; color:white; border:none; cursor:pointer; }
-.card { background:white; padding:15px; margin:10px 0; border-radius:10px; box-shadow:0 3px 8px rgba(0,0,0,0.1);}
-.card img { width:100%; height:200px; object-fit:cover; border-radius:10px; }
-#map { height:400px; margin-top:20px; border-radius:10px; }
-h2 { color:#1f3c88; }
-</style>
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Smart Tour Guide
+    </title>
+
+    <link rel="stylesheet"
+        href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <style>
+
+        * {
+
+            margin: 0;
+
+            padding: 0;
+
+            box-sizing: border-box;
+        }
+
+        body {
+
+            font-family: 'Poppins', sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #020617,
+                    #0f172a,
+                    #1e293b
+                );
+
+            color: white;
+
+            min-height: 100vh;
+
+            overflow-x: hidden;
+
+            padding: 30px;
+        }
+
+        body::before {
+
+            content: "";
+
+            position: fixed;
+
+            width: 500px;
+
+            height: 500px;
+
+            background:
+                rgba(56,189,248,0.15);
+
+            filter: blur(120px);
+
+            top: -100px;
+
+            left: -100px;
+
+            z-index: -1;
+        }
+
+        body::after {
+
+            content: "";
+
+            position: fixed;
+
+            width: 400px;
+
+            height: 400px;
+
+            background:
+                rgba(168,85,247,0.15);
+
+            filter: blur(120px);
+
+            bottom: -100px;
+
+            right: -100px;
+
+            z-index: -1;
+        }
+
+        /* HEADER */
+
+        .header {
+
+            text-align: center;
+
+            margin-bottom: 60px;
+        }
+
+        .header h1 {
+
+            font-size: 5rem;
+
+            font-weight: 800;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #38bdf8,
+                    #a855f7,
+                    #06b6d4
+                );
+
+            -webkit-background-clip: text;
+
+            -webkit-text-fill-color: transparent;
+
+            margin-bottom: 20px;
+
+            text-shadow:
+                0 0 30px rgba(56,189,248,0.4);
+        }
+
+        .header p {
+
+            font-size: 1.4rem;
+
+            color: #cbd5e1;
+        }
+
+        /* SEARCH */
+
+        .search-container {
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            gap: 20px;
+
+            margin-bottom: 60px;
+        }
+
+        .search-container input {
+
+            width: 65%;
+
+            padding: 20px;
+
+            border-radius: 20px;
+
+            border: none;
+
+            outline: none;
+
+            background:
+                rgba(255,255,255,0.1);
+
+            color: white;
+
+            font-size: 1.1rem;
+
+            backdrop-filter: blur(10px);
+
+            box-shadow:
+                0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .search-container input::placeholder {
+
+            color: #cbd5e1;
+        }
+
+        .search-container button {
+
+            padding: 20px 35px;
+
+            border: none;
+
+            border-radius: 20px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #38bdf8,
+                    #8b5cf6
+                );
+
+            color: white;
+
+            font-size: 1.1rem;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+            transition: 0.4s;
+
+            box-shadow:
+                0 8px 25px rgba(56,189,248,0.4);
+        }
+
+        .search-container button:hover {
+
+            transform:
+                translateY(-4px)
+                scale(1.05);
+        }
+
+        /* SECTION */
+
+        .section {
+
+            margin-top: 60px;
+
+            padding: 35px;
+
+            border-radius: 30px;
+
+            background:
+                rgba(255,255,255,0.06);
+
+            backdrop-filter: blur(15px);
+
+            border:
+                1px solid rgba(255,255,255,0.1);
+
+            box-shadow:
+                0 10px 40px rgba(0,0,0,0.4);
+        }
+
+        .section-title {
+
+            font-size: 2.5rem;
+
+            margin-bottom: 30px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #38bdf8,
+                    #a855f7
+                );
+
+            -webkit-background-clip: text;
+
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* GRID */
+
+        .grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(auto-fit, minmax(300px,1fr));
+
+            gap: 30px;
+        }
+
+        /* CARDS */
+
+        .card {
+
+            background:
+                rgba(255,255,255,0.08);
+
+            border-radius: 25px;
+
+            padding: 30px;
+
+            transition: 0.4s;
+
+            border:
+                1px solid rgba(255,255,255,0.08);
+
+            position: relative;
+
+            overflow: hidden;
+        }
+
+        .card::before {
+
+            content: "";
+
+            position: absolute;
+
+            width: 100%;
+
+            height: 5px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #38bdf8,
+                    #8b5cf6
+                );
+
+            top: 0;
+
+            left: 0;
+        }
+
+        .card:hover {
+
+            transform:
+                translateY(-10px)
+                scale(1.02);
+
+            background:
+                rgba(255,255,255,0.12);
+        }
+
+        .card h3 {
+
+            font-size: 1.8rem;
+
+            color: #7dd3fc;
+
+            margin-bottom: 18px;
+        }
+
+        .card p {
+
+            font-size: 1rem;
+
+            color: #e2e8f0;
+
+            line-height: 1.8;
+        }
+
+        /* MAP */
+
+        #map {
+
+            height: 650px;
+
+            margin-top: 50px;
+
+            border-radius: 30px;
+
+            overflow: hidden;
+
+            border:
+                2px solid rgba(255,255,255,0.1);
+
+            box-shadow:
+                0 10px 40px rgba(0,0,0,0.4);
+        }
+
+        /* FOOTER */
+
+        .footer {
+
+            margin-top: 60px;
+
+            text-align: center;
+
+            color: #94a3b8;
+
+            font-size: 1.1rem;
+        }
+
+        .error {
+
+            color: #f87171;
+
+            text-align: center;
+
+            font-size: 1.3rem;
+        }
+
+    </style>
+
 </head>
 
 <body>
 
-<header>
-<h1>🌍 Advanced Tour Guide System</h1>
-<p>DSA • Maps • Route Optimization</p>
-</header>
+    <!-- HEADER -->
 
-<div class="container">
-<input type="text" id="city" placeholder="Enter city ">
-<button onclick="search()">Search</button>
+    <div class="header">
 
-<div id="output"></div>
-<div id="map"></div>
-</div>
+        <h1>
+            🌍 Smart Tour Guide
+        </h1>
 
-<script>
+        <p>
+            Discover Amazing Tourist Attractions Around The World
+        </p>
 
-// INIT MAP
-let map = L.map('map').setView([20.5937,78.9629],5);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    </div>
 
-let markers=[];
-let routeLine=null;
+    <!-- SEARCH -->
 
-// DATA (ALL CITIES)
-const data = {
-hyderabad:{
-places:[
-{name:"Charminar",lat:17.3616,lon:78.4747,img:"charminar.png"},
-{name:"Golconda Fort",lat:17.3833,lon:78.4011,img:"https://picsum.photos/400/300?2"},
-{name:"Ramoji Film City",lat:17.2543,lon:78.6808,img:"https://picsum.photos/400/300?3"},
-{name:"Hussain Sagar",lat:17.4239,lon:78.4738,img:"https://picsum.photos/400/300?4"},
-{name:"Birla Mandir",lat:17.4062,lon:78.4691,img:"https://picsum.photos/400/300?5"},
-{name:"Salar Jung Museum",lat:17.3713,lon:78.4804,img:"https://picsum.photos/400/300?6"},
-{name:"Chowmahalla Palace",lat:17.3578,lon:78.4717,img:"https://picsum.photos/400/300?7"}
-],
-food:[
-{name:"Biryani",hotel:"Paradise",img:"https://picsum.photos/400/300?101"},
-{name:"Haleem",hotel:"Shah Ghouse",img:"https://picsum.photos/400/300?102"},
-{name:"Irani Chai",hotel:"Cafe Niloufer",img:"https://picsum.photos/400/300?103"}
-]
-},
+    <div class="search-container">
 
-delhi:{
-places:[
-{name:"India Gate",lat:28.6129,lon:77.2295,img:"https://picsum.photos/400/300?11"},
-{name:"Red Fort",lat:28.6562,lon:77.2410,img:"https://picsum.photos/400/300?12"},
-{name:"Qutub Minar",lat:28.5245,lon:77.1855,img:"https://picsum.photos/400/300?13"},
-{name:"Lotus Temple",lat:28.5535,lon:77.2588,img:"https://picsum.photos/400/300?14"},
-{name:"Akshardham",lat:28.6127,lon:77.2773,img:"https://picsum.photos/400/300?15"},
-{name:"Humayun Tomb",lat:28.5933,lon:77.2507,img:"https://picsum.photos/400/300?16"},
-{name:"Jama Masjid",lat:28.6507,lon:77.2334,img:"https://picsum.photos/400/300?17"}
-],
-food:[
-{name:"Chaat",hotel:"Chandni Chowk",img:"https://picsum.photos/400/300?104"},
-{name:"Butter Chicken",hotel:"Moti Mahal",img:"https://picsum.photos/400/300?105"},
-{name:"Paratha",hotel:"Paranthe Wali Gali",img:"https://picsum.photos/400/300?106"}
-]
-},
+        <input
+            type="text"
+            id="cityInput"
+            placeholder="Search any city..."
+        >
 
-vijayawada:{
-places:[
-{name:"Kanaka Durga Temple",lat:16.5062,lon:80.6480,img:"https://picsum.photos/400/300?21"},
-{name:"Prakasam Barrage",lat:16.5184,lon:80.6124,img:"https://picsum.photos/400/300?22"},
-{name:"Bhavani Island",lat:16.4975,lon:80.6510,img:"https://picsum.photos/400/300?23"},
-{name:"Undavalli Caves",lat:16.4925,lon:80.5806,img:"https://picsum.photos/400/300?24"},
-{name:"Gandhi Hill",lat:16.5167,lon:80.6167,img:"https://picsum.photos/400/300?25"},
-{name:"Rajiv Gandhi Park",lat:16.5150,lon:80.6300,img:"https://picsum.photos/400/300?26"},
-{name:"Mangalagiri Temple",lat:16.4300,lon:80.5600,img:"https://picsum.photos/400/300?27"}
-],
-food:[
-{name:"Pesarattu",hotel:"Local Tiffin",img:"https://picsum.photos/400/300?107"},
-{name:"Andhra Meals",hotel:"Sri Kanya",img:"https://picsum.photos/400/300?108"},
-{name:"Gongura",hotel:"Local Mess",img:"https://picsum.photos/400/300?109"}
-]
-},
+        <button onclick="searchCity()">
+            Explore
+        </button>
 
-bangalore:{
-places:[
-{name:"Lalbagh",lat:12.9507,lon:77.5848,img:"https://picsum.photos/400/300?31"},
-{name:"Cubbon Park",lat:12.9763,lon:77.5929,img:"https://picsum.photos/400/300?32"},
-{name:"Bangalore Palace",lat:12.9987,lon:77.5920,img:"https://picsum.photos/400/300?33"},
-{name:"Vidhana Soudha",lat:12.9797,lon:77.5907,img:"https://picsum.photos/400/300?34"},
-{name:"ISKCON Temple",lat:13.0097,lon:77.5510,img:"https://picsum.photos/400/300?35"},
-{name:"Bannerghatta Zoo",lat:12.8000,lon:77.5770,img:"https://picsum.photos/400/300?36"},
-{name:"Ulsoor Lake",lat:12.9833,lon:77.6167,img:"https://picsum.photos/400/300?37"}
-],
-food:[
-{name:"Masala Dosa",hotel:"CTR",img:"https://picsum.photos/400/300?110"},
-{name:"Bisi Bele Bath",hotel:"MTR",img:"https://picsum.photos/400/300?111"},
-{name:"Filter Coffee",hotel:"Brahmin Cafe",img:"https://picsum.photos/400/300?112"}
-]
-},
+    </div>
 
-maharashtra:{
-places:[
-{name:"Gateway of India",lat:18.9220,lon:72.8347,img:"https://picsum.photos/400/300?41"},
-{name:"Marine Drive",lat:18.9430,lon:72.8238,img:"https://picsum.photos/400/300?42"},
-{name:"Juhu Beach",lat:19.0883,lon:72.8266,img:"https://picsum.photos/400/300?43"},
-{name:"Elephanta Caves",lat:18.9633,lon:72.9315,img:"https://picsum.photos/400/300?44"},
-{name:"Haji Ali",lat:18.9827,lon:72.8089,img:"https://picsum.photos/400/300?45"},
-{name:"Siddhivinayak",lat:19.0176,lon:72.8300,img:"https://picsum.photos/400/300?46"},
-{name:"Colaba",lat:18.9217,lon:72.8325,img:"https://picsum.photos/400/300?47"}
-],
-food:[
-{name:"Vada Pav",hotel:"Anand Stall",img:"https://picsum.photos/400/300?113"},
-{name:"Pav Bhaji",hotel:"Sardar",img:"https://picsum.photos/400/300?114"},
-{name:"Misal Pav",hotel:"Aaswad",img:"https://picsum.photos/400/300?115"}
-]
-},
+    <!-- RESULTS -->
 
-punjab:{
-places:[
-{name:"Golden Temple",lat:31.6200,lon:74.8765,img:"https://picsum.photos/400/300?51"},
-{name:"Jallianwala Bagh",lat:31.6206,lon:74.8806,img:"https://picsum.photos/400/300?52"},
-{name:"Wagah Border",lat:31.6040,lon:74.5720,img:"https://picsum.photos/400/300?53"},
-{name:"Durgiana Temple",lat:31.6300,lon:74.8700,img:"https://picsum.photos/400/300?54"},
-{name:"Ram Bagh",lat:31.6305,lon:74.8723,img:"https://picsum.photos/400/300?55"},
-{name:"Museum",lat:31.6280,lon:74.8730,img:"https://picsum.photos/400/300?56"},
-{name:"Akal Takht",lat:31.6205,lon:74.8760,img:"https://picsum.photos/400/300?57"}
-],
-food:[
-{name:"Makki Roti",hotel:"Kesar Dhaba",img:"https://picsum.photos/400/300?116"},
-{name:"Butter Chicken",hotel:"Beera",img:"https://picsum.photos/400/300?117"},
-{name:"Lassi",hotel:"Ahuja",img:"https://picsum.photos/400/300?118"}
-]
-}
+    <div id="results"></div>
 
-};
+    <!-- MAP -->
 
-// DISTANCE
-function dist(a,b){
-const R=6371;
-let dLat=(b.lat-a.lat)*Math.PI/180;
-let dLon=(b.lon-a.lon)*Math.PI/180;
-let x=Math.sin(dLat/2)**2+
-Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*
-Math.sin(dLon/2)**2;
-return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
-}
+    <div id="map"></div>
 
-// GREEDY ROUTE (DSA)
-function routeOrder(places){
-let visited=new Array(places.length).fill(false);
-let order=[0];
-visited[0]=true;
+    <!-- FOOTER -->
 
-while(order.length<places.length){
-let last=order[order.length-1];
-let min=Infinity, idx=-1;
+    <div class="footer">
 
-for(let i=0;i<places.length;i++){
-if(!visited[i]){
-let d=dist(places[last],places[i]);
-if(d<min){min=d; idx=i;}
-}
-}
-visited[idx]=true;
-order.push(idx);
-}
-return order;
-}
+        ✈️ Explore • Travel • Experience
 
-// SEARCH
-function search(){
-const city=document.getElementById("city").value.toLowerCase();
-const output=document.getElementById("output");
+    </div>
 
-if(!data[city]){
-output.innerHTML="❌ City not available";
-return;
-}
+    <script>
 
-let {places,food}=data[city];
+        let map;
 
-map.invalidateSize();
-map.setView([places[0].lat,places[0].lon],12);
+        async function searchCity() {
 
-// clear
-markers.forEach(m=>map.removeLayer(m));
-markers=[];
-if(routeLine) map.removeLayer(routeLine);
+            const city =
+                document.getElementById("cityInput").value;
 
-// sort
-places.sort((a,b)=>dist(places[0],a)-dist(places[0],b));
+            const resultsDiv =
+                document.getElementById("results");
 
-// display places
-output.innerHTML="<h2>Tourist Places</h2>";
+            try {
 
-places.forEach(p=>{
-markers.push(L.marker([p.lat,p.lon]).addTo(map).bindPopup(p.name));
+                const response =
+                    await fetch(
+                        `http://localhost:5000/search?city=${city}`
+                    );
 
-output.innerHTML+=`
-<div class="card">
-<b>${p.name}</b><br>
-📏 ${dist(places[0],p).toFixed(2)} km
-<img src="${p.img}">
-</div>`;
-});
+                const data =
+                    await response.json();
 
-// food
-output.innerHTML+="<h2>Food & Hotels</h2>";
+                if (data.error) {
 
-food.forEach(f=>{
-output.innerHTML+=`
-<div class="card">
-<b>${f.name}</b><br>
-🏨 ${f.hotel}
-<img src="${f.img}">
-</div>`;
-});
+                    resultsDiv.innerHTML =
+                        `<p class="error">
+                            ${data.error}
+                        </p>`;
 
-// route line
-let order=routeOrder(places);
-let latlngs=order.map(i=>[places[i].lat,places[i].lon]);
-routeLine = L.polyline(latlngs,{color:'red'}).addTo(map);
+                    return;
+                }
 
-}
+                let html = `
 
-</script>
+                <div class="section">
+
+                    <h2 class="section-title">
+                        🌍 Tourist Attractions
+                    </h2>
+
+                    <div class="grid">
+                `;
+
+                data.places.forEach(place => {
+
+                    html += `
+
+                    <div class="card">
+
+                        <h3>
+                            📍 ${place.name}
+                        </h3>
+
+                        <p>
+                            ${place.address}
+                        </p>
+
+                    </div>
+                    `;
+                });
+
+                html += `
+                    </div>
+                </div>
+
+
+
+                <div class="section">
+
+                    <h2 class="section-title">
+                        🗺️ Smart Travel Itinerary
+                    </h2>
+
+                    <div class="grid">
+                `;
+
+                data.places.forEach((place, index) => {
+
+                    html += `
+
+                    <div class="card">
+
+                        <h3>
+                            Stop ${index + 1}
+                        </h3>
+
+                        <p>
+                            📍 ${place.name}
+                        </p>
+
+                        <p>
+                            ${place.address}
+                        </p>
+
+                    </div>
+                    `;
+                });
+
+                html += `
+                    </div>
+                </div>
+                `;
+
+                resultsDiv.innerHTML = html;
+
+
+                // REMOVE OLD MAP
+                if (map) {
+
+                    map.remove();
+                }
+
+                // CREATE MAP
+                map =
+                    L.map('map').setView(
+                        [
+                            data.places[0].lat,
+                            data.places[0].lon
+                        ],
+                        12
+                    );
+
+                L.tileLayer(
+                    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    {
+                        attribution:
+                            '&copy; OpenStreetMap contributors'
+                    }
+                ).addTo(map);
+
+
+                const routePoints = [];
+
+                data.places.forEach(place => {
+
+                    const coordinates =
+                        [place.lat, place.lon];
+
+                    routePoints.push(
+                        coordinates
+                    );
+
+                    L.marker(coordinates)
+
+                        .addTo(map)
+
+                        .bindPopup(
+
+                            `
+                            <b>${place.name}</b>
+
+                            <br><br>
+
+                            ${place.address}
+                            `
+                        );
+                });
+
+
+                // CONNECT ITINERARY ROUTE
+                L.polyline(
+                    routePoints,
+                    {
+                        color: '#38bdf8',
+
+                        weight: 7,
+
+                        opacity: 0.9,
+
+                        dashArray: '12,10'
+                    }
+                ).addTo(map);
+
+            }
+
+            catch (error) {
+
+                console.log(error);
+
+                resultsDiv.innerHTML =
+                    `<p class="error">
+                        Backend not working
+                    </p>`;
+            }
+        }
+
+    </script>
 
 </body>
+
 </html>

@@ -1,15 +1,28 @@
-version: '3'
-
 services:
 
   backend:
+
     build: ./backend
+
+    container_name: smart-tour-backend
+
+    restart: always
+
     ports:
       - "5000:5000"
 
+
+
   frontend:
+
     build: ./frontend
+
+    container_name: smart-tour-frontend
+
+    restart: always
+
     ports:
-      - "8080:80"
+      - "3000:80"
+
     depends_on:
       - backend
